@@ -91,6 +91,36 @@ section{margin-top:26px}
 .move-item b{font-size:18px;font-weight:900;letter-spacing:.1em}
 .move-item .sub{display:block;font-size:11px;color:#8a795a;margin-top:5px;letter-spacing:.05em}
 .move-item:hover .sub{color:#b7a67f}
+/* ── 江湖传功榜 ───────────────────── */
+.rank-head{display:flex;align-items:center;justify-content:space-between;max-width:680px;margin:0 auto 14px;padding:0 6px}
+.rank-stat{font-size:13px;color:#9c8a68;letter-spacing:.05em}
+.rank-stat b{color:var(--gold);font-family:Georgia,serif;font-size:17px;margin:0 2px}
+.rank-wrap{max-width:680px;margin:0 auto;height:344px;overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent);
+  mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent)}
+.rank-list{animation:rankScroll 32s linear infinite}
+.rank-wrap:hover .rank-list{animation-play-state:paused}
+@keyframes rankScroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.rank-row{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:8px 0;border-radius:10px;
+  background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
+  border:1px solid rgba(74,58,34,.55);opacity:0;animation:rowIn .5s forwards;cursor:default}
+@keyframes rowIn{to{opacity:1}}
+.rank-no{flex:0 0 30px;height:30px;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;font-weight:900;font-size:15px;color:#8a795a;background:rgba(255,255,255,.04)}
+.rank-no.t1{background:linear-gradient(135deg,#f5d67b,#c9992e);color:#3a2b07;box-shadow:0 0 14px rgba(217,179,108,.55)}
+.rank-no.t2{background:linear-gradient(135deg,#e8e8e8,#9d9d9d);color:#33302a}
+.rank-no.t3{background:linear-gradient(135deg,#e6a878,#a05e2c);color:#3d1f05}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:17px;font-weight:900;color:var(--paper);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rank-region{font-size:12px;color:#8a795a;font-weight:400}
+.rank-move{font-size:11px;color:#b7a67f;border:1px solid #4a3a22;border-radius:4px;padding:1px 7px;flex:0 0 auto}
+.rank-amount{font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);flex:0 0 auto;text-shadow:0 0 12px rgba(217,179,108,.35)}
+.rank-row.top1{border-color:rgba(217,179,108,.7);background:linear-gradient(90deg,rgba(217,179,108,.13),rgba(217,179,108,.02))}
+.rank-row.top1 .rank-name{color:#f0d9a5;text-shadow:0 0 10px rgba(217,179,108,.4)}
+.crown{font-size:14px}
+.rank-cta{display:block;text-align:center;margin:18px auto 0;color:var(--gold);font-size:14px;letter-spacing:.15em;text-indent:.15em;
+  border:1px dashed var(--gold-deep);border-radius:999px;padding:9px 26px;max-width:360px;transition:.3s}
+.rank-cta:hover{background:var(--gold);color:#241b10;border-style:solid}
 /* ── 江湖告示 ─────────────────────── */
 .notice{max-width:680px;margin:56px auto 0;background:var(--paper);color:#4a3a25;
   border-radius:6px;padding:30px 30px 24px;position:relative;
@@ -153,6 +183,10 @@ body.shake{animation:shake .28s}
   header{padding:44px 0 18px}
   .intro{font-size:15px}
   .notice{padding:24px 18px 20px}
+  .rank-move{display:none}            /* 小屏隐藏掌法标签，保地区/名字/金额 */
+  .rank-wrap{height:300px}
+  .rank-name{font-size:15px}
+  .rank-amount{font-size:17px}
 }
 </style>
 </head>
@@ -225,6 +259,18 @@ body.shake{animation:shake .28s}
   <div class="section-title">秘籍全录</div>
   <p class="section-sub">十八掌名震江湖 · 点任意一掌亦可纳礼（金额随意）</p>
   <div class="bookwall" id="bookwall"></div>
+</section>
+
+<!-- ═══ 江湖传功榜 ═══ -->
+<section id="rank">
+  <div class="section-title">江湖传功榜</div>
+  <p class="section-sub">英烈谱 · 高手云集 · 扫码传功即刻上榜留名</p>
+  <div class="rank-head">
+    <span class="rank-stat">已纳礼<b id="rankCount">0</b>位豪杰</span>
+    <span class="rank-stat">香火钱合计<b id="rankTotal">&yen;0</b></span>
+  </div>
+  <div class="rank-wrap" id="rankWrap"><div class="rank-list" id="rankList"></div></div>
+  <a class="rank-cta" href="#donate">榜上无名？点这里一掌留名 &#10142;</a>
 </section>
 
 <!-- ═══ 江湖告示 ═══ -->
@@ -305,6 +351,54 @@ var MOVES = [
       wall.appendChild(d);
     })(i);
   }
+})();
+
+/* ═══ 江湖传功榜 ═══
+   数据手动维护在下面 RANK 数组里（不用改页面结构）；
+   榜单自动按金额降序、自动统计人数与总额、自动无缝滚动。 */
+var RANK = [
+  {name:'乔帮主',   region:'京城 · 北京',     amount:999,  move:'亢龙有悔', word:'拜师大礼，请掌门务必笑纳！'},
+  {name:'段公子',   region:'大理 · 云南',     amount:666,  move:'飞龙在天', word:'用六脉神剑换一掌，值！'},
+  {name:'风清扬',   region:'江南 · 杭州',     amount:520,  move:'飞龙在天', word:'独孤九剑传人路过，聊表心意'},
+  {name:'扫地僧',   region:'中原 · 郑州',     amount:366,  move:'或跃在渊', word:'藏经阁扫了四十年地，攒的'},
+  {name:'东方姑娘', region:'潇湘 · 长沙',     amount:258,  move:'或跃在渊', word:'欲练神功，先给盘缠'},
+  {name:'郭大侠',   region:'岭南 · 广州',     amount:199,  move:'见龙在田', word:'侠之大者，为国纳礼'},
+  {name:'周伯通',   region:'桃花岛 · 苏州',   amount:168,  move:'见龙在田', word:'老顽童双手互搏来送钱'},
+  {name:'韦爵爷',   region:'京城 · 北京',     amount:128,  move:'见龙在田', word:'多谢款待，赏银奉上'},
+  {name:'小龙女',   region:'终南山 · 西安',   amount:99.9, move:'潜龙勿用', word:'古墓派恭贺开派大吉'},
+  {name:'令狐冲',   region:'闽地 · 福州',     amount:88.8, move:'潜龙勿用', word:'喝酒钱分你一半'},
+  {name:'黄药师',   region:'东海 · 舟山',     amount:66.6, move:'潜龙勿用', word:'碧海潮生曲贺之'},
+  {name:'虚竹先生', region:'西域 · 乌鲁木齐', amount:66,   move:'潜龙勿用', word:'误打误撞也上了榜'},
+  {name:'张真人',   region:'武当 · 十堰',     amount:52,   move:'潜龙勿用', word:'太极生两仪，扫码生银两'},
+  {name:'杨过',     region:'襄阳 · 湖北',     amount:36,   move:'潜龙勿用', word:'十六年之约，先垫个酒钱'},
+  {name:'鳌少保',   region:'关外 · 沈阳',     amount:30,   move:'潜龙勿用', word:'我有的是银子！'},
+  {name:'陈近南',   region:'台南 · 台湾',     amount:25,   move:'潜龙勿用', word:'大事要紧，先捐路费'},
+  {name:'林平之',   region:'福威 · 福州',     amount:16.6, move:'潜龙勿用', word:'辟邪剑法终究换不来钱'},
+  {name:'游坦之',   region:'聚贤庄 · 太原',   amount:6.6,  move:'潜龙勿用', word:'全副身家，掌门莫嫌弃'}
+];
+(function renderRank(){
+  var data = RANK.slice().sort(function(a, b){ return b.amount - a.amount; });
+  var list = document.getElementById('rankList'), i, html = '';
+  for (i = 0; i < data.length; i++) {
+    var d = data[i];
+    var rowCls = i === 0 ? ' top1' : '';
+    var noCls  = i === 0 ? ' t1' : i === 1 ? ' t2' : i === 2 ? ' t3' : '';
+    var no     = i < 3 ? ['一','二','三'][i] : String(i + 1);
+    var crown  = i === 0 ? ' <span class="crown">\uD83D\uDC51</span>' : '';
+    html += '<div class="rank-row' + rowCls + '" title="\u300C' + d.word + '\u300D" ' +
+            'style="animation-delay:' + (i * 0.07) + 's">' +
+              '<div class="rank-no' + noCls + '">' + no + '</div>' +
+              '<div class="rank-info"><div class="rank-name">' + d.name + crown +
+                '<span class="rank-region">' + d.region + '</span></div></div>' +
+              '<span class="rank-move">' + d.move + '</span>' +
+              '<div class="rank-amount">&yen;' + d.amount + '</div>' +
+            '</div>';
+  }
+  list.innerHTML = html + html;      /* 双份数据实现无缝循环滚动 */
+  var total = 0;
+  for (i = 0; i < data.length; i++) total += data[i].amount;
+  document.getElementById('rankCount').textContent = data.length;
+  document.getElementById('rankTotal').innerHTML = '&yen;' + (total % 1 ? total.toFixed(1) : total);
 })();
 
 /* ═══ 传功密室（模态框）═══ */

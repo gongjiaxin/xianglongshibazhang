@@ -95,7 +95,7 @@ section{margin-top:26px}
 .rank-head{display:flex;align-items:center;justify-content:space-between;max-width:680px;margin:0 auto 14px;padding:0 6px}
 .rank-stat{font-size:13px;color:#9c8a68;letter-spacing:.05em}
 .rank-stat b{color:var(--gold);font-family:Georgia,serif;font-size:17px;margin:0 2px}
-.rank-wrap{max-width:680px;margin:0 auto;height:344px;overflow:hidden;position:relative;
+.rank-wrap{max-width:680px;margin:0 auto;height:400px;overflow:hidden;position:relative;
   -webkit-mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent);
   mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent)}
 .rank-list{animation:rankScroll 32s linear infinite}
@@ -103,7 +103,7 @@ section{margin-top:26px}
 @keyframes rankScroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 .rank-row{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:8px 0;border-radius:10px;
   background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.008));
-  border:1px solid rgba(74,58,34,.55);opacity:0;animation:rowIn .5s forwards;cursor:default}
+  border:1px solid rgba(74,58,34,.55);opacity:0;animation:rowIn .5s forwards;cursor:pointer}
 @keyframes rowIn{to{opacity:1}}
 .rank-no{flex:0 0 30px;height:30px;display:flex;align-items:center;justify-content:center;
   border-radius:8px;font-weight:900;font-size:15px;color:#8a795a;background:rgba(255,255,255,.04)}
@@ -111,6 +111,8 @@ section{margin-top:26px}
 .rank-no.t2{background:linear-gradient(135deg,#e8e8e8,#9d9d9d);color:#33302a}
 .rank-no.t3{background:linear-gradient(135deg,#e6a878,#a05e2c);color:#3d1f05}
 .rank-info{flex:1;min-width:0}
+.rank-word{font-size:12.5px;color:#9c8a68;line-height:1.5;margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-name{font-size:17px;font-weight:900;color:var(--paper);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rank-region{font-size:12px;color:#8a795a;font-weight:400}
 .rank-move{font-size:11px;color:#b7a67f;border:1px solid #4a3a22;border-radius:4px;padding:1px 7px;flex:0 0 auto}
@@ -121,6 +123,15 @@ section{margin-top:26px}
 .rank-cta{display:block;text-align:center;margin:18px auto 0;color:var(--gold);font-size:14px;letter-spacing:.15em;text-indent:.15em;
   border:1px dashed var(--gold-deep);border-radius:999px;padding:9px 26px;max-width:360px;transition:.3s}
 .rank-cta:hover{background:var(--gold);color:#241b10;border-style:solid}
+/* ── 留言气泡（点击榜单查看完整留言）── */
+.word-bubble{position:fixed;left:50%;bottom:7vh;transform:translate(-50%,24px);z-index:70;
+  max-width:min(560px,88vw);background:linear-gradient(180deg,#2a2013,#1c150c);
+  border:1px solid var(--gold-deep);border-radius:14px;padding:14px 20px;
+  opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+  box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.word-bubble.show{opacity:1;transform:translate(-50%,0)}
+.wb-name{color:var(--gold);font-size:15px;letter-spacing:.1em;margin-bottom:6px}
+.wb-text{color:var(--paper-dim);font-size:15px;line-height:1.9}
 /* ── 江湖告示 ─────────────────────── */
 .notice{max-width:680px;margin:56px auto 0;background:var(--paper);color:#4a3a25;
   border-radius:6px;padding:30px 30px 24px;position:relative;
@@ -184,7 +195,7 @@ body.shake{animation:shake .28s}
   .intro{font-size:15px}
   .notice{padding:24px 18px 20px}
   .rank-move{display:none}            /* 小屏隐藏掌法标签，保地区/名字/金额 */
-  .rank-wrap{height:300px}
+  .rank-wrap{height:330px}
   .rank-name{font-size:15px}
   .rank-amount{font-size:17px}
 }
@@ -279,6 +290,7 @@ body.shake{animation:shake .28s}
   <ul>
     <li><b>为何纳礼？</b>域名年费、服务器银两、掌门酒钱，皆需盘缠。</li>
     <li><b>有何回报？</b>本派不图回报，只愿你行走江湖，逢人便夸此站好看。</li>
+    <li><b>如何留名？</b>凡纳礼之侠士，皆刻名于上方《江湖传功榜》。掌门在此立誓：本网站永久保存、绝不删档——名留青史，供后人瞻仰，百年之后，尔等大名仍在此榜熠熠生辉。</li>
     <li><b>银两不足？</b>心意无价，一元亦是豪情，掌门照样抱拳谢过。</li>
     <li><b>彩蛋何在？</b>在页面任意处连点十八下，有真气涌动之象，慎用。</li>
   </ul>
@@ -315,10 +327,16 @@ body.shake{animation:shake .28s}
       <button class="copy-btn" id="copyBtn" onclick="copyUsdt()">复制地址</button>
     </div>
     <button class="upload-btn" onclick="pickLocal()">先在本地预览收款码（仅存本机浏览器）</button>
-    <p class="amount-tip" id="amountTip">扫码后请手动输入对应金额 · 二维码可长按保存</p>
+    <p class="amount-tip" id="amountTip">扫码后请手动输入对应金额 · 每日仅收 &yen;200，收满即止（丐帮戒律，恕难通融）</p>
   </div>
 </div>
 <input type="file" id="filePick" accept="image/*" hidden>
+
+<!-- 留言气泡（点击传功榜查看完整留言） -->
+<div class="word-bubble" id="wordBubble">
+  <div class="wb-name" id="wbName"></div>
+  <div class="wb-text" id="wbText"></div>
+</div>
 
 <script>
 /* ═══ 配置：收款码图片路径（把图片放到 assets/ 目录即可）═══ */
@@ -357,24 +375,24 @@ var MOVES = [
    数据手动维护在下面 RANK 数组里（不用改页面结构）；
    榜单自动按金额降序、自动统计人数与总额、自动无缝滚动。 */
 var RANK = [
-  {name:'乔帮主',   region:'京城 · 北京',     amount:999,  move:'亢龙有悔', word:'拜师大礼，请掌门务必笑纳！'},
-  {name:'段公子',   region:'大理 · 云南',     amount:666,  move:'飞龙在天', word:'用六脉神剑换一掌，值！'},
-  {name:'风清扬',   region:'江南 · 杭州',     amount:520,  move:'飞龙在天', word:'独孤九剑传人路过，聊表心意'},
-  {name:'扫地僧',   region:'中原 · 郑州',     amount:366,  move:'或跃在渊', word:'藏经阁扫了四十年地，攒的'},
-  {name:'东方姑娘', region:'潇湘 · 长沙',     amount:258,  move:'或跃在渊', word:'欲练神功，先给盘缠'},
-  {name:'郭大侠',   region:'岭南 · 广州',     amount:199,  move:'见龙在田', word:'侠之大者，为国纳礼'},
-  {name:'周伯通',   region:'桃花岛 · 苏州',   amount:168,  move:'见龙在田', word:'老顽童双手互搏来送钱'},
-  {name:'韦爵爷',   region:'京城 · 北京',     amount:128,  move:'见龙在田', word:'多谢款待，赏银奉上'},
-  {name:'小龙女',   region:'终南山 · 西安',   amount:99.9, move:'潜龙勿用', word:'古墓派恭贺开派大吉'},
-  {name:'令狐冲',   region:'闽地 · 福州',     amount:88.8, move:'潜龙勿用', word:'喝酒钱分你一半'},
-  {name:'黄药师',   region:'东海 · 舟山',     amount:66.6, move:'潜龙勿用', word:'碧海潮生曲贺之'},
-  {name:'虚竹先生', region:'西域 · 乌鲁木齐', amount:66,   move:'潜龙勿用', word:'误打误撞也上了榜'},
-  {name:'张真人',   region:'武当 · 十堰',     amount:52,   move:'潜龙勿用', word:'太极生两仪，扫码生银两'},
-  {name:'杨过',     region:'襄阳 · 湖北',     amount:36,   move:'潜龙勿用', word:'十六年之约，先垫个酒钱'},
-  {name:'鳌少保',   region:'关外 · 沈阳',     amount:30,   move:'潜龙勿用', word:'我有的是银子！'},
-  {name:'陈近南',   region:'台南 · 台湾',     amount:25,   move:'潜龙勿用', word:'大事要紧，先捐路费'},
-  {name:'林平之',   region:'福威 · 福州',     amount:16.6, move:'潜龙勿用', word:'辟邪剑法终究换不来钱'},
-  {name:'游坦之',   region:'聚贤庄 · 太原',   amount:6.6,  move:'潜龙勿用', word:'全副身家，掌门莫嫌弃'}
+  {name:'乔帮主',   region:'京城 · 北京',     amount:999,  move:'亢龙有悔', word:'今日拜师学艺！愿降龙十八掌保我全家平安健康，来年发大财，走上人生巅峰！'},
+  {name:'段公子',   region:'大理 · 云南',     amount:666,  move:'飞龙在天', word:'祖传六脉神剑换一掌降龙！愿生意越做越大，今年再开三家分店，财源滚滚来！'},
+  {name:'风清扬',   region:'江南 · 杭州',     amount:520,  move:'飞龙在天', word:'愿天下有情人终成眷属！我和我家那口子要白头偕老，一辈子不吵架！'},
+  {name:'扫地僧',   region:'中原 · 郑州',     amount:366,  move:'或跃在渊', word:'扫了四十年地，就盼着儿子考研上岸！掌门掌门，这一掌一定要灵啊！'},
+  {name:'东方姑娘', region:'潇湘 · 长沙',     amount:258,  move:'或跃在渊', word:'愿我减肥成功暴瘦二十斤！升职加薪当上总经理，出任CEO迎娶高富帅！'},
+  {name:'郭大侠',   region:'岭南 · 广州',     amount:199,  move:'见龙在田', word:'侠之大者，为国纳礼！愿风调雨顺国泰民安，俺家稻田今年大丰收！'},
+  {name:'周伯通',   region:'桃花岛 · 苏州',   amount:168,  move:'见龙在田', word:'双手互搏赚双份钱来送礼！愿孙子高考六百分，考个顶呱呱的好大学！'},
+  {name:'韦爵爷',   region:'京城 · 北京',     amount:128,  move:'见龙在田', word:'七个老婆等着我养！愿公司顺利上市股票翻倍，庆功酒喝不完！'},
+  {name:'小龙女',   region:'终南山 · 西安',   amount:99.9, move:'潜龙勿用', word:'愿房贷早日还清，我和过儿的小破窝赶紧装修完，从此隐居不再搬砖！'},
+  {name:'令狐冲',   region:'闽地 · 福州',     amount:88.8, move:'潜龙勿用', word:'愿戒酒成功……算了！愿酒量见涨朋友常伴，江湖再无烦心事！'},
+  {name:'黄药师',   region:'东海 · 舟山',     amount:66.6, move:'潜龙勿用', word:'愿我家闺女婚姻美满夫妻和睦！女婿若敢欺负她，老夫打断他的腿！'},
+  {name:'虚竹先生', region:'西域 · 乌鲁木齐', amount:66,   move:'潜龙勿用', word:'老实人一个！愿今年顺利转正老板涨工资，爸妈身体健健康康！'},
+  {name:'张真人',   region:'武当 · 十堰',     amount:52,   move:'潜龙勿用', word:'太极生两仪，扫码生银两！愿道观香火旺盛，天下无病无灾。'},
+  {name:'杨过',     region:'襄阳 · 湖北',     amount:36,   move:'潜龙勿用', word:'异地恋第八年！愿早日团圆买房结婚，这辈子不再等十六年！'},
+  {name:'鳌少保',   region:'关外 · 沈阳',     amount:30,   move:'潜龙勿用', word:'我有的是银子！愿生意兴隆通四海，财源广进达三江！'},
+  {name:'陈近南',   region:'台南 · 台湾',     amount:25,   move:'潜龙勿用', word:'愿项目顺利上线永不加班！产品经理别再改需求了，功德无量！'},
+  {name:'林平之',   region:'福威 · 福州',     amount:16.6, move:'潜龙勿用', word:'愿股市长红基金回本！回本我就收手，真的，这次是真的，最后一次！'},
+  {name:'游坦之',   region:'聚贤庄 · 太原',   amount:6.6,  move:'潜龙勿用', word:'全副身家，掌门莫嫌弃！愿下月发工资前泡面管够，彩票中个五百块！'}
 ];
 (function renderRank(){
   var data = RANK.slice().sort(function(a, b){ return b.amount - a.amount; });
@@ -385,11 +403,15 @@ var RANK = [
     var noCls  = i === 0 ? ' t1' : i === 1 ? ' t2' : i === 2 ? ' t3' : '';
     var no     = i < 3 ? ['一','二','三'][i] : String(i + 1);
     var crown  = i === 0 ? ' <span class="crown">\uD83D\uDC51</span>' : '';
-    html += '<div class="rank-row' + rowCls + '" title="\u300C' + d.word + '\u300D" ' +
+    html += '<div class="rank-row' + rowCls + '" onclick="showWord(this)" ' +
+            'data-name="' + d.name + '" data-word="' + d.word + '" ' +
             'style="animation-delay:' + (i * 0.07) + 's">' +
               '<div class="rank-no' + noCls + '">' + no + '</div>' +
-              '<div class="rank-info"><div class="rank-name">' + d.name + crown +
-                '<span class="rank-region">' + d.region + '</span></div></div>' +
+              '<div class="rank-info">' +
+                '<div class="rank-name">' + d.name + crown +
+                  '<span class="rank-region">' + d.region + '</span></div>' +
+                '<div class="rank-word">\u300C' + d.word + '\u300D</div>' +
+              '</div>' +
               '<span class="rank-move">' + d.move + '</span>' +
               '<div class="rank-amount">&yen;' + d.amount + '</div>' +
             '</div>';
@@ -400,6 +422,16 @@ var RANK = [
   document.getElementById('rankCount').textContent = data.length;
   document.getElementById('rankTotal').innerHTML = '&yen;' + (total % 1 ? total.toFixed(1) : total);
 })();
+
+/* 点击榜单任意一行，底部弹出完整留言气泡 */
+function showWord(el){
+  var box = document.getElementById('wordBubble');
+  document.getElementById('wbName').textContent = '\u300C' + el.getAttribute('data-name') + '\u300D的留言';
+  document.getElementById('wbText').textContent = el.getAttribute('data-word');
+  box.classList.add('show');
+  clearTimeout(showWord._t);
+  showWord._t = setTimeout(function(){ box.classList.remove('show'); }, 4200);
+}
 
 /* ═══ 传功密室（模态框）═══ */
 function openQr(moveName, amount){
@@ -422,8 +454,8 @@ function switchTab(ch){
   document.getElementById('tab-usdt').classList.toggle('on', ch === 'usdt');
   document.getElementById('usdtBox').classList.toggle('show', ch === 'usdt');
   document.getElementById('amountTip').textContent = (ch === 'usdt')
-    ? 'USDT 请按实时汇率自行换算金额 · 请务必使用 TRC20 网络'
-    : '扫码后请手动输入对应金额 · 二维码可长按保存';
+    ? 'USDT 不限额 · 金额随缘，掌门照单全收 · 请务必使用 TRC20 网络'
+    : '扫码后请手动输入对应金额 · 每日仅收 \u00A5200，收满即止（丐帮戒律，恕难通融）';
   setQr();
 }
 

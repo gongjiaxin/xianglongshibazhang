@@ -8,9 +8,10 @@
 <!--
   ════════════════════════════════════════════════════════════
   使用方法（重要）：
-  1. 把你的微信收款码图片放到 assets/wechat-qr.png
-  2. 把你的支付宝收款码图片放到 assets/alipay.png
-  3. 上传 index.html 和 assets/ 到你的服务器即可，纯静态无依赖
+  1. 把你的微信收款码图片放到 assets/wechat-qr.jpg
+  2. 把你的支付宝收款码图片放到 assets/alipay.jpg
+  3. 把你的 USDT(TRC20) 收款地址二维码图片放到 assets/usdt.jpg
+  4. 上传 index.html 和 assets/ 到你的服务器即可，纯静态无依赖
   （收款码在微信/支付宝 App 里可生成并保存图片）
   ════════════════════════════════════════════════════════════
 -->
@@ -119,7 +120,14 @@ footer{text-align:center;padding:60px 0 34px;color:#7d6c4e;font-size:14px;line-h
 .modal-move{margin:10px 0 16px;color:var(--paper-dim);font-size:15px}
 .modal-move b{color:var(--gold);font-family:Georgia,serif;font-size:20px}
 .tabs{display:flex;gap:8px}
-.tab{flex:1;padding:9px 0;border:1px solid #4a3a22;border-radius:8px;color:#b7a67f;cursor:pointer;font-size:15px;letter-spacing:.15em;transition:.25s}
+.tab{flex:1;padding:9px 0;border:1px solid #4a3a22;border-radius:8px;color:#b7a67f;cursor:pointer;font-size:14px;letter-spacing:.06em;transition:.25s}
+/* ── USDT（TRC20）地址展示 ───────── */
+.usdt-box{display:none;margin:12px auto 2px;padding:10px 14px;border:1px solid #3f6b4a;border-radius:10px;background:rgba(38,110,74,.08)}
+.usdt-box.show{display:block}
+.net-tag{display:inline-block;background:#268a58;color:#eafff3;font-size:11px;padding:2px 9px;border-radius:4px;letter-spacing:.12em;margin-bottom:6px}
+.usdt-addr{font-family:Consolas,Menlo,monospace;font-size:13px;color:#cfe9d8;word-break:break-all;line-height:1.6;user-select:all}
+.copy-btn{margin-top:8px;background:none;border:1px dashed #3f6b4a;color:#7fcf9f;border-radius:6px;padding:5px 18px;font-size:12px;cursor:pointer;letter-spacing:.15em;text-indent:.15em;font-family:inherit;transition:.25s}
+.copy-btn:hover{color:#a9e8c0;border-color:#268a58}
 .tab.on{background:var(--gold);color:#241b10;font-weight:900;border-color:var(--gold)}
 .qr-box{position:relative;width:232px;height:232px;margin:18px auto 8px;background:#fff;border-radius:12px;overflow:hidden}
 .qr-box img{width:100%;height:100%;object-fit:contain;display:block}
@@ -245,24 +253,31 @@ body.shake{animation:shake .28s}
     <div class="tabs">
       <div class="tab on" id="tab-wechat" onclick="switchTab('wechat')">微信纳礼</div>
       <div class="tab" id="tab-alipay" onclick="switchTab('alipay')">支付宝纳礼</div>
+      <div class="tab" id="tab-usdt" onclick="switchTab('usdt')">USDT纳礼</div>
     </div>
     <div class="qr-box">
       <img id="qrImg" alt="收款二维码">
       <div class="scanline"></div>
       <div class="qr-tip" id="qrTip">
         尚未放置收款码
-        <small>请将图片放到 assets/ 目录<br>（wechat-qr.png / alipay.png）</small>
+        <small>请将图片放到 assets/ 目录<br>（wechat-qr.jpg / alipay.jpg / usdt.jpg）</small>
       </div>
     </div>
+    <div class="usdt-box" id="usdtBox">
+      <span class="net-tag">TRC20</span>
+      <div class="usdt-addr" id="usdtAddr">TJSf3PPBvMKEqrCXQeoqGRSqDRsdgSBNuB</div>
+      <button class="copy-btn" id="copyBtn" onclick="copyUsdt()">复制地址</button>
+    </div>
     <button class="upload-btn" onclick="pickLocal()">先在本地预览收款码（仅存本机浏览器）</button>
-    <p class="amount-tip">扫码后请手动输入对应金额 · 二维码可长按保存</p>
+    <p class="amount-tip" id="amountTip">扫码后请手动输入对应金额 · 二维码可长按保存</p>
   </div>
 </div>
 <input type="file" id="filePick" accept="image/*" hidden>
 
 <script>
 /* ═══ 配置：收款码图片路径（把图片放到 assets/ 目录即可）═══ */
-var QR_SRC = { wechat: 'assets/wechat-qr.png', alipay: 'assets/alipay.png' };
+var QR_SRC = { wechat: 'assets/wechat-qr.jpg', alipay: 'assets/alipay.jpg', usdt: 'assets/usdt.jpg' };
+var USDT_ADDR = 'TJSf3PPBvMKEqrCXQeoqGRSqDRsdgSBNuB';   // TRC20 收款地址
 var LS_KEY = 'xl18z_qr_';          // 本地预览缓存前缀（仅存本机浏览器）
 
 var curChannel = 'wechat';
@@ -310,7 +325,31 @@ function switchTab(ch){
   curChannel = ch;
   document.getElementById('tab-wechat').classList.toggle('on', ch === 'wechat');
   document.getElementById('tab-alipay').classList.toggle('on', ch === 'alipay');
+  document.getElementById('tab-usdt').classList.toggle('on', ch === 'usdt');
+  document.getElementById('usdtBox').classList.toggle('show', ch === 'usdt');
+  document.getElementById('amountTip').textContent = (ch === 'usdt')
+    ? 'USDT 请按实时汇率自行换算金额 · 请务必使用 TRC20 网络'
+    : '扫码后请手动输入对应金额 · 二维码可长按保存';
   setQr();
+}
+
+/* USDT 地址一键复制（兼容 http 环境） */
+function copyUsdt(){
+  function ok(){
+    var b = document.getElementById('copyBtn');
+    b.textContent = '已复制 ✓';
+    setTimeout(function(){ b.textContent = '复制地址'; }, 1600);
+  }
+  function fallback(){
+    var t = document.createElement('textarea');
+    t.value = USDT_ADDR;
+    document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); ok(); } catch (e) {}
+    t.remove();
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(USDT_ADDR).then(ok, fallback);
+  } else { fallback(); }
 }
 function setQr(){
   var img = document.getElementById('qrImg'), tip = document.getElementById('qrTip');

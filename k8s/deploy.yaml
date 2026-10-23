@@ -27,7 +27,7 @@ data:
   default.conf: |
     server {
         listen 8080;
-        server_name xianglongshibazhang.com;
+        server_name a.xianglongshibazhang.com;
 
         root  /usr/share/nginx/html;
         index index.html;
@@ -135,7 +135,7 @@ spec:
       nodePort: 30088     # 节点对外端口（30000-32767 随便选的）
 
 ---
-# ── Ingress：xianglongshibazhang.com（仅 HTTP，无 443）─────────
+# ── Ingress：a.xianglongshibazhang.com（仅 HTTP，无 443）───────
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -148,7 +148,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: xianglongshibazhang.com
+    - host: a.xianglongshibazhang.com
       http:
         paths:
           - path: /
